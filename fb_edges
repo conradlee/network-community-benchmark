@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+"""fb_edges.
+
+Loads network data from Facebook100 dataset and prints them to the command line
+as tab-delimited edge lists. Uses path specified by SRC_DATA_DIR variable
+in settings.py to locate the Facebook100 dataset.
+
+Usage:
+  fb_edges <network_name>
+
+Options:
+  -h --help     Show this help message.
+
+Useful properties of the edge lists
+* Contiguous integers starting with zero
+* Printed in ascending order
+* Edges are undirected, and only included in one direction
+"""
+
+from docopt import docopt
+from glob import glob
+from os.path import isfile, isdir, dirname, basename
+import numpy
+from scipy import io, sparse
+from itertools import izip
+from settings import *
+
+
+def college2path():
+    '''Returns a dictionary that maps a college name to the path of
+    that college's matlab file'''
+    
+    matlab_filenames = glob(SRC_DATA_DIR + '*.mat')
+    c2p = {}
+    for fname in matlab_filenames:
+        c2p[basename(fname).split('.')[0]] = fname        
+    del c2p['schools']
+    return c2p
+    
+
+if __name__ == "__main__":
+    arguments = docopt(__doc__)
+    network_name = arguments["<network_name>"]
+    c2p = college2path()
+
+    try:
+        network_path = c2p[network_name]
+    except KeyError:
+        raise ValueError, "Could not find network with name %s, please check the network name." % network_name
+
+    # Load adjacency matrix from matlab file
+    A = io.loadmat(network_path)["A"].tocsr().astype(numpy.bool)
+
+    # Print edges
+    rows, cols = sparse.triu(A).nonzero()
+    for row_idx, col_idx in izip(rows, cols):
+        print "%d\t%d" % (row_idx, col_idx)
