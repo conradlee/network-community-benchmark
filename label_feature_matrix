@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+"""label_feature_matrix.
+
+  Given a set of communities through STDIN and university name,
+  and an attribute name, this program returns a labelled community
+  assignment matrix.
+
+  The output format is as follows:
+     node_id    comm1_id,comm2_id,...    label
+  where the node_id is separated from the list of communities with a tab,
+  and the label is separated from the list of communities by a tab.
+
+Usage:
+  label_feature_matrix <university> <attribute>
+
+Options:
+  -h --help         Show this help message.
+"""
+
+from docopt import docopt
+import settings
+from os.path import isfile, isdir, dirname, basename
+import sys
+from scipy import sparse, io
+import numpy
+
+def get_labels(university, attribute):
+    matlab_path = settings.SRC_DATA_DIR + university + '.mat'
+    attr_data = io.loadmat(matlab_path)['local_info']
+    attr_data = attr_data[:,1:]
+    column_titles = [tup[0] for tup in settings.ATTRS_DTYPE]
+    if not attribute in column_titles:
+        raise ValueError, "Attribute %s is invalid.  Valid attributes are %s" % (attribute, " ".join(column_titles))
+    labels = attr_data[:,column_titles.index(attribute)]
+    labels[labels < 0] = 0 # To fix single bad data point in UChicago30 dataset with a negative year
+    return labels
+
+def get_comm_matrix(n_nodes):
+    comms = []
+    for line in sys.stdin:
+        comms.append(map(int, line.strip().split()))
+    comm_mat = sparse.dok_matrix((n_nodes, len(comms)), dtype=numpy.float32)
+    for comm_idx, comm in enumerate(comms):
+        for node in comm:
+            comm_mat[node, comm_idx] = 1
+    return comm_mat.tocsr()
+
+if __name__ == '__main__':
+    arguments = docopt(__doc__)
+    university = arguments['<university>']
+    attribute = arguments['<attribute>']
+    labels = get_labels(university, attribute)
+    comm_matrix = get_comm_matrix(len(labels))
+    assert labels.shape[0] == comm_matrix.shape[0]
+    for node_id in range(len(labels)):
+        _, comm_idxs = comm_matrix[node_id,:].nonzero()
+        print "%d\t%s\t%d" % (node_id, ",".join(map(str, comm_idxs)), labels[node_id])
