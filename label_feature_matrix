@@ -40,10 +40,16 @@ def get_comm_matrix(n_nodes):
     comms = []
     for line in sys.stdin:
         comms.append(map(int, line.strip().split()))
+
     comm_mat = sparse.dok_matrix((n_nodes, len(comms)), dtype=numpy.float32)
     for comm_idx, comm in enumerate(comms):
         for node in comm:
-            comm_mat[node, comm_idx] = 1
+            try:
+                comm_mat[node, comm_idx] = 1
+            except IndexError:
+                raise ValueError, 'Node set from community assignment does not' \
+                    + 'correspond to nodeset from attribute matrix.  Make sure' \
+                    + 'you are using the same network for both'
     return comm_mat.tocsr()
 
 if __name__ == '__main__':
