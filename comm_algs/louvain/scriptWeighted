@@ -1,0 +1,7 @@
+rm communities.dat
+for a in `cat time.txt`
+do
+./community graph.bin -l -1 -w -t $a > temp.dat
+./hierarchy temp.dat >> communities.dat
+done
+rm temp.dat

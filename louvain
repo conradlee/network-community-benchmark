@@ -1,0 +1,140 @@
+#!/usr/bin/env python
+
+"""louvain.
+
+  Runs the Louvain heuristic of modularity maximization to detect network communities.
+  Reads in network data as an edgelist piped in through STDIN. Writes out community
+  assignments to STDOUT.  The output format maps each node to a list of communities,
+  as follows:
+     node1_id     comm1_id comm2_id ...
+     node2_id     comm2_id ...
+     ...
+  where the node_ids are separated from the list of assigned communities by a tab, and
+  the various communities to which a node is assigned are separated by spaces.
+
+Usage:
+  louvain [--markovtime=<t>] [--multilevel]
+
+Options:
+  --markovtime=<t>  Set the markov time parameter t, use 1.0 for Newman modularity [default: 1.0].
+  --multilevel      Use all levels of dendrogram as communities rather than best single cut.
+  -h --help         Show this help message.
+"""
+
+from docopt import docopt
+import settings
+from os.path import isfile, isdir, dirname, basename
+import sys
+import tempfile
+import shutil
+import numpy
+import scipy
+import subprocess
+import pipes
+import itertools
+import networkx as nx
+
+def read_edges():
+    return [map(int, l.strip().split()) for l in sys.stdin]
+
+def run_timescale(t, multilevel=False):
+    with Tempdir() as dirname:
+
+        # Write edgelist
+        edgelist_filename = "%s/edges.edgelist" % (dirname)
+        with open(edgelist_filename, "w") as edgelist_file:
+            for line in sys.stdin:
+                edgelist_file.write(line)
+        
+        # Convert edgelist to binary
+        louvain_folder = "%s/comm_algs/louvain/" % (settings.BENCHMARK_ROOT)
+        convert_exec = louvain_folder + "convert" 
+        if not isfile(convert_exec):
+            raise ValueError, "Louvain executable should be compiled in %s but it's not." % (louvain_folder)
+
+        edgelist_binary =  pipes.quote("%s/edges.bin" % (dirname))
+        convert_command = "%s -i %s -o %s 2>/dev/null" % (convert_exec, pipes.quote(edgelist_filename), edgelist_binary)
+        subprocess.check_call(convert_command, shell=True)
+
+        # Run louvain binary
+        louvain_exec = louvain_folder + "community"
+        comm_file = dirname + "/communities.tree"
+        louvain_command = "%s %s -t %0.2f -l -1 >> %s 2>/dev/null" % (louvain_exec, edgelist_binary, t, comm_file)
+        subprocess.check_call(louvain_command, shell=True)
+
+        # Parse results
+        tree = parse_treefile(comm_file)
+        if multilevel:
+            comms = list(comms_all_levels(tree))
+        else:
+            comms = [frozenset(c) for c in flat_cut(tree)]
+
+        for c in sorted(comms, key=lambda c: len(c), reverse=True):
+            print " ".join(map(str, c))
+
+### Begin auxillary functions ###
+
+def parse_treefile(filename):
+    levels_idxs = [0]
+    with open(filename) as f:
+        lines = [map(int, l.strip().split()) for l in f]
+    lines = filter(lambda x: len(x)==2, lines)
+
+    node_ids = (t[0] for t in lines)
+    for i, (n1, n2) in enumerate(pairwise(node_ids)):
+        if n1 >= n2:
+            levels_idxs.append(i + 1)
+
+    levels_idxs.append(len(lines))  
+    levels = [lines[begin:end] for begin, end in pairwise(levels_idxs)]
+
+    tree = nx.DiGraph()
+    for level_no, level in enumerate(levels[:-1]):
+        for child, parent in level:
+            tree.add_edge((level_no+1, parent), (level_no, child))
+    return tree
+
+def flat_cut(tree):
+    G = tree.to_undirected()
+    components = nx.connected_component_subgraphs(G)
+    leaves = [filter(lambda tup: tup[0] == 0, c.nodes()) for c in components]
+    partition = [map(lambda tup: tup[1], node_tups) for node_tups in leaves]
+    return partition
+
+def comms_all_levels(tree):
+    return set(map(lambda comm: frozenset(comm), every_cut(tree)))
+
+def every_cut(tree):
+    non_leaf_nodes = filter(lambda node: tree.out_degree(node) > 0, tree.nodes())
+    for current_root in non_leaf_nodes:
+        comm = []
+        for parent, children in nx.dfs_successors(tree, current_root).iteritems():
+            leaves = filter(lambda t: t[0] == 0, children)
+            comm.extend(leaves)
+        yield [t[1] for t in comm]
+
+class Tempdir:
+    def __enter__(self):
+        self.dir = tempfile.mkdtemp()
+        return self.dir
+    def __exit__(self, tye, value, traceback):
+        try:
+            #print self.dir
+            shutil.rmtree(self.dir)
+        except OSError:
+            pass
+
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = itertools.tee(iterable)
+    next(b, None)
+    return itertools.izip(a, b)
+
+### End auxillary functions ###
+
+
+if __name__ == "__main__":
+    arguments = docopt(__doc__)
+    timescale = float(arguments["--markovtime"])
+    multilevel = arguments["--multilevel"]
+    run_timescale(timescale, multilevel=multilevel)
