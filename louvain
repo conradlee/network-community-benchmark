@@ -11,6 +11,8 @@
      ...
   where the node_ids are separated from the list of assigned communities by a tab, and
   the various communities to which a node is assigned are separated by spaces.
+  
+  Writes a list of communities to STDOUT, with one community per line.
 
 Usage:
   louvain [--markovtime=<t>] [--multilevel]

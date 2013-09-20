@@ -1,0 +1,119 @@
+#!/usr/bin/env python
+
+"""infer.
+
+Loads in feature matrix X and labels y via STDIN.  Uses the
+classifier specified in settings.py to infer the label matrix
+y. For classification accuracy, 10-fold cross validation is
+used. Only <n_folds> of the ten-folds are carried out.
+
+Usage:
+  infer <n_folds>
+
+Options:
+  -h --help         Show this help message.
+
+Example:
+  Infer could be used in the following pipeline:
+
+    ./fb_edges UChicago30 | ./louvain --markovtime=0.5 --multilevel | ./label_feature_matrix UChicago30 year | infer --folds=3
+
+  The output reported in thee example above is the average accuracy
+  across three folds of the 10-fold cross validation, where "accuracy"
+  is simply the percentage of correct classifications.
+"""
+
+from docopt import docopt
+import sys
+import numpy
+from itertools import izip
+from scipy import sparse
+from collections import defaultdict
+from sklearn import cross_validation
+import settings
+
+
+def measure_accuracy(X, y, n_folds):
+    skf = cross_validation.StratifiedKFold(y, n_folds=10)
+    accuracies = []
+    current_fold = 1
+    X = X.todense()
+    for train_mask, test_mask in skf:
+        train_X, train_y = X[train_mask,:], y[train_mask]
+        test_X,  test_y  = X[test_mask,:],  y[test_mask]
+        print "Now training for fold %d" % current_fold
+        settings.CLASSIFIER.fit(train_X, train_y)
+        print "Now predicting"
+        predictions = settings.CLASSIFIER.predict(test_X)
+        accuracy = sum(predictions == test_y) / float(len(test_y))
+        accuracies.append(accuracy)
+        if current_fold == n_folds:
+            break
+        current_fold += 1
+    return accuracies
+
+def get_X_y():
+
+    # Read in data from stdin
+    features_list, labels_list = [], []
+    label_freq = defaultdict(int)
+    for line in sys.stdin:
+        node_id, nz_cols, label = line.strip().split("\t")
+        nz_cols = set(map(int, nz_cols.split(",")))
+        label = int(label)
+        if label != 0:
+            features_list.append(nz_cols)
+            labels_list.append(label)
+            label_freq[label] += 1
+
+    # Decide which labels will be used and assign those integer values
+    label2int = {}
+    for label, freq in label_freq.items():
+        if freq >= settings.MIN_LABEL_FREQ:
+            if not(label in label2int):
+                label2int[label] = len(label2int)
+
+    print label_freq
+    print label2int
+    # Remove data with excluded labels, then count how often each feature is nonzero
+    included_features, included_labels = [], []
+    columns = set([])
+    feature_freq = defaultdict(int)
+    for features, label in izip(features_list, labels_list):
+        if label in label2int:
+            included_features.append(features)
+            included_labels.append(label)
+            columns.update(features)
+            for feature in features:
+                feature_freq[feature] += 1
+
+    # Map viable columns to contiguous integers
+    col_old2new = {}
+    for old_col_idx in columns:
+        if feature_freq[old_col_idx] >= settings.MIN_FEATURE_FREQ:
+            col_old2new[old_col_idx] = len(col_old2new)
+    
+    # Using mapping for columns and labels, build X and y
+    assert len(included_features) == len(included_labels)
+
+    X = sparse.dok_matrix((len(included_features), len(col_old2new)), dtype=numpy.float64)
+    y = numpy.zeros(len(included_labels), dtype=numpy.float64)
+
+    for row_idx, (features, label) in enumerate(izip(included_features, included_labels)):
+        y[row_idx] = label2int[label]
+        for old_col_idx in features:
+            if old_col_idx in col_old2new:
+                X[row_idx, col_old2new[old_col_idx]] = 1.
+    return X.tocsr(), y
+
+if __name__ == '__main__':
+    arguments = docopt(__doc__)
+    print arguments
+    n_folds = int(arguments['<n_folds>'])
+    if n_folds > 10 or n_folds < 1:
+        raise ValueError, "n_folds is set to %d but must be in range [1, 10]." % n_folds
+
+    X, y = get_X_y()
+    print X.nnz
+    print X.shape, y.shape
+    print measure_accuracy(X, y, n_folds)

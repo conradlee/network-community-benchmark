@@ -34,7 +34,10 @@ def college2path():
     matlab_filenames = glob(SRC_DATA_DIR + '*.mat')
     c2p = {}
     for fname in matlab_filenames:
-        c2p[basename(fname).split('.')[0]] = fname        
+        c2p[basename(fname).split('.')[0]] = fname       
+    if len(c2p) != 101:
+        raise ValueError, "The data source folder does not contain the expected " + \
+            "number of .mat files.  Please ensure you've unzipped 'facebook100.zip' to " + SRC_DATA_DIR
     del c2p['schools']
     return c2p
     

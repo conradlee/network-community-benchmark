@@ -31,9 +31,10 @@ def get_labels(university, attribute):
     attr_data = attr_data[:,1:]
     column_titles = [tup[0] for tup in settings.ATTRS_DTYPE]
     if not attribute in column_titles:
-        raise ValueError, "Attribute %s is invalid.  Valid attributes are %s" % (attribute, " ".join(column_titles))
+        raise ValueError, "Attribute %s is invalid.  Valid attributes are %s" \
+            % (attribute, " ".join(column_titles))
     labels = attr_data[:,column_titles.index(attribute)]
-    labels[labels < 0] = 0 # To fix single bad data point in UChicago30 dataset with a negative year
+    labels[labels < 0] = 0 # Fixes bad data point in UChicago30 year
     return labels
 
 def get_comm_matrix(n_nodes):
@@ -41,11 +42,11 @@ def get_comm_matrix(n_nodes):
     for line in sys.stdin:
         comms.append(map(int, line.strip().split()))
 
-    comm_mat = sparse.dok_matrix((n_nodes, len(comms)), dtype=numpy.float32)
+    comm_mat = sparse.dok_matrix((n_nodes, len(comms)), dtype=numpy.bool)
     for comm_idx, comm in enumerate(comms):
         for node in comm:
             try:
-                comm_mat[node, comm_idx] = 1
+                comm_mat[node, comm_idx] = True
             except IndexError:
                 raise ValueError, 'Node set from community assignment does not' \
                     + 'correspond to nodeset from attribute matrix.  Make sure' \
