@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""louvain.
+"""louvain_wrapper.
 
   Runs the Louvain heuristic of modularity maximization to detect network communities.
   Reads in network data as an edgelist piped in through STDIN. Writes out community
@@ -15,7 +15,7 @@
   Writes a list of communities to STDOUT, with one community per line.
 
 Usage:
-  louvain [--markovtime=<t>] [--multilevel]
+  louvain_wrapper [--markovtime=<t>] [--multilevel]
 
 Options:
   --markovtime=<t>  Set the markov time parameter t, use 1.0 for Newman modularity [default: 1.0].
@@ -23,24 +23,26 @@ Options:
   -h --help         Show this help message.
 """
 
-from docopt import docopt
+import sys, os
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 import settings
+
 from os.path import isfile, isdir, dirname, basename
-import sys
-import tempfile
-import shutil
+from docopt import docopt
+
 import numpy
 import scipy
 import subprocess
 import pipes
-import itertools
 import networkx as nx
+import utils
+
 
 def read_edges():
     return [map(int, l.strip().split()) for l in sys.stdin]
 
 def run_timescale(t, multilevel=False):
-    with Tempdir() as dirname:
+    with utils.Tempdir() as dirname:
 
         # Write edgelist
         edgelist_filename = "%s/edges.edgelist" % (dirname)
@@ -83,12 +85,12 @@ def parse_treefile(filename):
     lines = filter(lambda x: len(x)==2, lines)
 
     node_ids = (t[0] for t in lines)
-    for i, (n1, n2) in enumerate(pairwise(node_ids)):
+    for i, (n1, n2) in enumerate(utils.pairwise(node_ids)):
         if n1 >= n2:
             levels_idxs.append(i + 1)
 
     levels_idxs.append(len(lines))  
-    levels = [lines[begin:end] for begin, end in pairwise(levels_idxs)]
+    levels = [lines[begin:end] for begin, end in utils.pairwise(levels_idxs)]
 
     tree = nx.DiGraph()
     for level_no, level in enumerate(levels[:-1]):
@@ -115,22 +117,7 @@ def every_cut(tree):
             comm.extend(leaves)
         yield [t[1] for t in comm]
 
-class Tempdir:
-    def __enter__(self):
-        self.dir = tempfile.mkdtemp()
-        return self.dir
-    def __exit__(self, tye, value, traceback):
-        try:
-            #print self.dir
-            shutil.rmtree(self.dir)
-        except OSError:
-            pass
 
-def pairwise(iterable):
-    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
-    a, b = itertools.tee(iterable)
-    next(b, None)
-    return itertools.izip(a, b)
 
 ### End auxillary functions ###
 
