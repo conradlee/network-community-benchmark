@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+
+"""gce_wrapper.
+
+  Runs the Greedy Clique Expansion method of community detection.
+  Reads in network data as an edgelist piped in through STDIN. Writes out community
+  assignments to STDOUT.  The output format maps each node to a list of communities,
+  as follows:
+     node1_id     comm1_id comm2_id ...
+     node2_id     comm2_id ...
+     ...
+  where the node_ids are separated from the list of assigned communities by a tab, and
+  the various communities to which a node is assigned are separated by spaces.
+  
+  Writes a list of communities to STDOUT, with one community per line.
+
+Usage:
+  gce_wrapper [--alpha=<a>] [--min_cliq=<m>] [--eta=<e>] [--phi=<p>]  [--multilevel]
+
+Options:
+  --alpha=<a>     Sets the resolution parameter alpha. Larger values lead to smaller
+                  communities, smaller values lead to larger communities.  Values between
+                  0.8 and 1.5 may be useful [default: 1.0].
+  --eta=<e>       Eta is the minimum value for one seed
+                  to overlap with another seed before it is considered
+                  sufficiently overlapping to be discarded. 1 is complete
+                  overlap; smaller values may be used to prune seeds more
+                  aggressively [default: 0.5].
+  --phi=<p>       Phi is the proportion of nodes within a core clique
+                  that must have already been covered by other cliques, for the
+                  clique to be 'sufficiently covered' in the Clique Coveage Heuristic
+                  [default: 0.65].
+  --min_cliq=<m>  The minimum size a clique must have to be used as a seed. Recommend 4 as
+                  default, unless particularly small communities are desired (then use 3)
+                  [default: 4]
+  --multilevel    Compbine results of the following alphas: 0.8, 1.0, 1.2, 1.4
+  -h --help       Show this help message.
+"""
+
+
+import sys
+import utils
+import subprocess
+from os.path import isfile
+from docopt import docopt
+
+def run_gce(alpha, eta, min_clique, phi):
+    with utils.Tempfile() as temp_edgelist:
+        with utils.Tempfile() as temp_commlist:
+            with open(temp_edgelist.name, 'w') as outfile:
+                for line in sys.stdin:
+                    outfile.write(line)
+        
+            gce_exec = 'comm_algs/GCECommunityFinder/build/GCECommunityFinder'
+            if not isfile(gce_exec):
+                compile_gce()
+    
+            command = '%s %s %d %0.3f %0.3f %0.3f 2>/dev/null > %s' % (gce_exec,
+                                                           temp_edgelist.name,
+                                                           min_clique,
+                                                           eta,
+                                                           alpha,
+                                                           phi,
+                                                           temp_commlist.name)
+            subprocess.check_call(command, shell=True)
+            with open(temp_commlist.name) as comm_file:
+                comms = [map(int, l.strip().split()) for l in comm_file]
+            for comm in comms:
+                print ' '.join(map(str, comm))
+                         
+
+def compile_gce():
+    command = "cd comm_algs/GCECommunityFinder/build; make; cd ../../.."
+    subprocess.check_call(command, shell=True)
+
+if __name__ == "__main__":
+    arguments = docopt(__doc__)
+    alpha      = float(arguments['--alpha'])
+    min_clique =   int(arguments['--min_cliq'])
+    phi        = float(arguments['--phi'])
+    eta        = float(arguments['--eta'])
+    run_gce(alpha, eta, min_clique, phi)
