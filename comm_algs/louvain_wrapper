@@ -54,7 +54,7 @@ def run_timescale(t, multilevel=False):
         louvain_folder = "%s/comm_algs/louvain/" % (settings.BENCHMARK_ROOT)
         convert_exec = louvain_folder + "convert" 
         if not isfile(convert_exec):
-            raise ValueError, "Louvain executable should be compiled in %s but it's not." % (louvain_folder)
+            compile_louvain()
 
         edgelist_binary =  pipes.quote("%s/edges.bin" % (dirname))
         convert_command = "%s -i %s -o %s 2>/dev/null" % (convert_exec, pipes.quote(edgelist_filename), edgelist_binary)
@@ -75,6 +75,10 @@ def run_timescale(t, multilevel=False):
 
         for c in sorted(comms, key=lambda c: len(c), reverse=True):
             print " ".join(map(str, c))
+
+def compile_louvain():
+    command = "cd comm_algs/louvain; make >/dev/null 2>/dev/null; cd ../../.."
+    subprocess.check_call(command, shell=True)
 
 ### Begin auxillary functions ###
 

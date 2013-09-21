@@ -15,7 +15,7 @@
   Writes a list of communities to STDOUT, with one community per line.
 
 Usage:
-  gce_wrapper [--alpha=<a>] [--min_cliq=<m>] [--eta=<e>] [--phi=<p>]  [--multilevel]
+  gce_wrapper [--alpha=<a>] [--min_cliq=<m>] [--eta=<e>] [--phi=<p>]
 
 Options:
   --alpha=<a>     Sets the resolution parameter alpha. Larger values lead to smaller
@@ -33,7 +33,6 @@ Options:
   --min_cliq=<m>  The minimum size a clique must have to be used as a seed. Recommend 4 as
                   default, unless particularly small communities are desired (then use 3)
                   [default: 4]
-  --multilevel    Compbine results of the following alphas: 0.8, 1.0, 1.2, 1.4
   -h --help       Show this help message.
 """
 
@@ -70,7 +69,7 @@ def run_gce(alpha, eta, min_clique, phi):
                          
 
 def compile_gce():
-    command = "cd comm_algs/GCECommunityFinder/build; make; cd ../../.."
+    command = "cd comm_algs/GCECommunityFinder/build; make >/dev/null 2>/dev/null; cd ../../.."
     subprocess.check_call(command, shell=True)
 
 if __name__ == "__main__":
