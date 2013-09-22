@@ -32,3 +32,31 @@ Thus if we examine the contents of the `LouvainCaltech36.results` file, we see
 $ cat LouvainCaltech36.results
 0.367708333333
 ```
+
+Each script's documentation can be accessed in the usual command-line fashion with the `-h` flag. For example, typing
+
+```bash
+./fb_edges -h
+```
+
+prints the following help statement
+
+```bash
+fb_edges.
+
+Loads network data from Facebook100 dataset and prints them to the command line
+as tab-delimited edge lists. Uses path specified by SRC_DATA_DIR variable
+in settings.py to locate the Facebook100 dataset.
+
+Usage:
+  fb_edges <network_name>
+
+Options:
+  -h --help     Show this help message.
+
+Useful properties of the edge lists
+* Contiguous integers starting with zero
+* Printed in ascending order
+* Edges are undirected, and only included in one direction
+
+```
