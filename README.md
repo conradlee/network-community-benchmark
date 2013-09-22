@@ -33,6 +33,9 @@ $ cat LouvainCaltech36.results
 0.367708333333
 ```
 
+More documentation
+------------------
+
 Each script's documentation can be accessed in the usual command-line fashion with the `-h` flag. For example, typing
 
 ```bash
@@ -60,3 +63,19 @@ Useful properties of the edge lists
 * Edges are undirected, and only included in one direction
 
 ```
+
+Implemented community detection algorithms
+------------------------------------------
+
+ * Louvain method (with optional Markov time resolution parameter). Implementation by E. Lefebvre, adapted by J.-L. Guillaume and then by R. Lambiotte. Implements modularity maximization heuristic described in the paper [Fast unfolding of community hierarchies in large networks](http://http://dx.doi.org/10.1088/1742-5468/2008/10/P10008) by V. Blondel, J.-L. Guillaume, R. Lambiotte, E. Lefebvre. The Markov time parameterization is described in [Stability of graph communities across time scales](http://dx.doi.org/10.1073/pnas.0903215107) by J.-C. Delvenne, S. N. Yaliraki, M. Barahona.
+ * Greedy Clique Expansion, described in [Detecting highly overlapping community structure by greedy clique expansion](http://arxiv.org/abs/1002.1827) by C. Lee, F. Reid, A. McDaid, N. Hurley. I used the implementation available [here](https://sites.google.com/site/greedycliqueexpansion/).
+
+If you want to add another algorithm, see the instructions for doing so below in the 'extensibility' section.
+
+Possible attributes
+-------------------
+
+
+
+Extensibility (i.e., how to test and add your own algorithms!)
+--------------------------------------------------------------
