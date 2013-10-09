@@ -100,21 +100,23 @@ Extensibility (i.e., how to test and add your own algorithms!)
 
 Let's say you have a new community detection algorithm *my_alg* and you want to integrate it into this benchmark. All you need to do is make sure that your implementation takes in a properly-formatted edgelist as input and spits out a properly-formatted line-delimited list of communities.  What do I mean by 'properly-formatted'? Two nodes on each line separated by whitespace, with a line terminated by a UNIX newline (\n).  Thus a network that consisted of two disconnected triangles would looke like
 
-
-   0    1
-   0    2
-   1    2
-   3    4
-   3    5
-   4    5
+````
+0    1
+0    2
+1    2
+3    4
+3    5
+4    5
+```
 
 Within each line, nodes are separated by a tab.  Note that the node IDs are contiguous integers starting with zero.
 
 The output of of the implementation should be a line-delimited list of communities, where each line is a whitespace separated list of nodes belonging to a community.  Thus if the algorithm took in the two-triangle network above, and detected each traingle as a community, its output should look like
 
-
-  0 1 2
-  3 4 5
+```
+0 1 2
+3 4 5
+```
 
 Of course, many implementations don't use this format---in that case, just write a wrapper for your implementation. There are two examples of such wrappers in the `comm_algs` folder.
 
