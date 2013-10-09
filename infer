@@ -62,7 +62,7 @@ def get_X_y():
         else:
             nz_cols = []
         label = int(label)
-        if label != 0:
+        if label != 0: # Ignore label values of 0 because these represent unknown labels
             features_list.append(nz_cols)
             labels_list.append(label)
             label_freq[label] += 1
