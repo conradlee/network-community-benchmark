@@ -6,6 +6,8 @@ community detection algorithms on social networks with meta-data. This document
 includes instructions on how to benchmark a community detection algorithm on
 Facebook data.
 
+**An important note on the Facebook100 Data:** To carry out the benchmarks, you will need a copy of the Facebook100 dataset. I am not allowed to distribute that dataset here, so you will have to download it elsewhere. This [blog post](http://sociograph.blogspot.com/2011/03/facebook100-data-and-parser-for-it.html) contains some useful information on obtaining the dataset.
+
 Workflow
 --------
 
@@ -32,6 +34,9 @@ Thus if we examine the contents of the `LouvainCaltech36.results` file, we see
 $ cat LouvainCaltech36.results
 0.367708333333
 ```
+
+Configuring the benchmark utilty in *settings.py*
+-------------------------------------------------
 
 More documentation
 ------------------
