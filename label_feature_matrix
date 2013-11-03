@@ -28,7 +28,11 @@ import numpy
 def get_labels(university, attribute):
     matlab_path = settings.SRC_DATA_DIR + university + '.mat'
     attr_data = io.loadmat(matlab_path)['local_info']
-    attr_data = attr_data[:,1:]
+
+    # If using Facebook100v1, remove facebook ids
+    if attr_data.shape[1] == 8:
+        attr_data = attr_data[:,1:]
+    
     column_titles = [tup[0] for tup in settings.ATTRS_DTYPE]
     if not attribute in column_titles:
         raise ValueError, "Attribute %s is invalid.  Valid attributes are %s" \
