@@ -15,6 +15,7 @@
 // see readme.txt for more details
 
 #include <sys/mman.h>
+#include <unistd.h>
 #include "graph_binary.h"
 
 Graph::Graph() {
