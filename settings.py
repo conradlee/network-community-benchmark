@@ -5,6 +5,10 @@ from sklearn import ensemble
 # Facebook100.zip
 SRC_DATA_DIR = '/home/conradlee/Downloads/facebook100/'
 
+# The path of the github repository, where the benchmarking code
+# lives
+BENCHMARK_ROOT = '/home/conradlee/github/network-community-benchmark'
+
 # The number of folds of the 10-fold cross validation to
 # carry out (max 10)
 N_FOLDS = 10           
@@ -40,5 +44,6 @@ ATTRS_DTYPE = [('student_fac', 'u1'),
                ('dorm', 'u4'),
                ('year', 'i4'),
                ('high_school', 'u4')]
+
 
 
