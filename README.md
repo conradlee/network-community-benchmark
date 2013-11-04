@@ -6,7 +6,7 @@ community detection algorithms on social networks with meta-data. This document
 includes instructions on how to benchmark a community detection algorithm on
 Facebook data.
 
-**An important note on the Facebook100 Data:** To carry out the benchmarks, you will need a copy of the Facebook100 dataset. I am not allowed to distribute that dataset here, so you will have to download it elsewhere. This [blog post](http://sociograph.blogspot.com/2011/03/facebook100-data-and-parser-for-it.html) contains some useful information on obtaining the dataset.
+**An important note on the Facebook100 Data:** To carry out the benchmarks, you will need a copy of the Facebook100 dataset. I am not allowed to distribute that dataset here, so you will have to download it elsewhere. The folks at archive.org have bravely hosted this dataset, which you can find on [this page](https://archive.org/details/oxford-2005-facebook-matrix) --  just download facebook100.zip. This [blog post](http://sociograph.blogspot.com/2011/03/facebook100-data-and-parser-for-it.html) contains more information on obtaining the dataset.
 
 Workflow
 --------
@@ -34,6 +34,16 @@ Thus if we examine the contents of the `LouvainCaltech36.results` file, we see
 $ cat LouvainCaltech36.results
 0.367708333333
 ```
+
+Dependencies
+------------
+The benchmarking utility depends on numpy and a bunch of python modules, which are listed in the file `requirements.txt`.  You can install these from the command line by running the following commands:
+
+```bash
+$ pip install numpy
+$ pip install -r requirements.txt
+```
+(You might need to run those commands as sudo if you're not installing them in a virtual environment)
 
 Configuring the benchmark utility in *settings.py*
 -------------------------------------------------
