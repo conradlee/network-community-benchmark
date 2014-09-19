@@ -6,6 +6,8 @@ community detection algorithms on social networks with meta-data. This document
 includes instructions on how to benchmark a community detection algorithm on
 Facebook data.
 
+The benchmark contained in this repository was proposed in the paper, [Community detection: effective evaluation on large social networks](http://comnet.oxfordjournals.org/content/early/2013/10/07/comnet.cnt012.short).
+
 **An important note on the Facebook100 Data:** To carry out the benchmarks, you will need a copy of the Facebook100 dataset. I am not allowed to distribute that dataset here, so you will have to download it elsewhere. The folks at archive.org have bravely hosted this dataset, which you can find on [this page](https://archive.org/details/oxford-2005-facebook-matrix) --  just download facebook100.zip. This [blog post](http://sociograph.blogspot.com/2011/03/facebook100-data-and-parser-for-it.html) contains more information on obtaining the dataset.
 
 Workflow
